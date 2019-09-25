@@ -32,37 +32,61 @@ def split_dataset( input_dataset[ feature_col_num??? ]  ) :
 
 	return left_node_dataset , right_node_dataset
 
+def IG_of_each_feature( ) :
+
+	weight_left = n_row_left/n_row_total
+	weight_right = n_row_right/n_row_total
+
+	contribut_left = weight_left*Gini_left
+	contribut_right = weight_right* Gini_right
+
+	info_gain_of_feature = Gini_score_of_parent_dataset - sum( contribut_left , contribut_right )
+
+	return info_gain_of_feature
+
 ###########################################################################################
 
 class_labels = [ 'y' , 'n' ]
 
-info_gain_all_features_list = []
 
 def info_gain_of_dataset( input_dataset , ) :
 
-# calculate information gain for each feature/column 
-for feature_col_num in len( input_dataset[:,-2] ) :  # should be col index, -2 the one before the last=class labels???
+	info_gain_all_features_list = []
 
-	total_rows_of_parent_dataset = len( input_dataset[ feature_col_num??? ] ) # get the col based on col index
-	GiniScore_and_totalRows = Gini_score( input_dataset[ feature_col_num??? ] ,  class_labels )
-	Gini_score_of_parent_dataset = GiniScore_and_totalRows[0]
+	# calculate information gain for each feature/column 
+	for feature_col_num in len( input_dataset[:,-2] ) :  # should be col index, -2 the one before the last=class labels???
 
-
-	# create a split in dataset based on each featureValue
-	# how create split in data set??? maybe filtering based on each featureValue???
-
-	left_node_dataset , right_node_dataset = split_dataset( input_dataset[ feature_col_num??? ] )  # how split input dataset???
+		total_rows_of_parent_dataset = len( input_dataset[ feature_col_num??? ] ) # get the col based on col index
+		GiniScore_and_totalRows = Gini_score( input_dataset[ feature_col_num??? ] ,  class_labels )
+		Gini_score_of_parent_dataset = GiniScore_and_totalRows[0]
 
 
-	# Gini score of each left and right nodes
-	Gini_of_left_node , rows_of_left_node = Gini_score( left_node_dataset , class_labels )  
-	Gini_of_right_node , rows_of_right_node = Gini_score( right_node_dataset , class_labels )  
+		# create a split in dataset based on each featureValue
+		# how create split in data set??? maybe filtering based on each featureValue???
 
-	# a function to calculate IG for each feature
-	IG_of_feature = IG_of_each_feature( Gini_score_of_parent_dataset , Gini_LEFT , GINI_RIGHT , n_row_left , n_row_right , n_row_total )
+		left_node_dataset , right_node_dataset = split_dataset( input_dataset[ feature_col_num??? ] )  # how split input dataset???
 
 
+		# Gini score of each left and right nodes
+		Gini_of_left_node , rows_of_left_node = Gini_score( left_node_dataset , class_labels )  
+		Gini_of_right_node , rows_of_right_node = Gini_score( right_node_dataset , class_labels )  
 
+		# a function to calculate IG for each feature
+		IG_of_feature = IG_of_each_feature( Gini_score_of_parent_dataset , Gini_left , Gini_right , n_row_left , n_row_right , n_row_total )
+
+		info_gain_all_features_list.append( IG_of_feature )
+
+	index_of_feat = max( info_gain_all_features_list )  # how get the index of feature????
+
+
+
+
+
+
+
+
+
+####################################################
 
 
 
