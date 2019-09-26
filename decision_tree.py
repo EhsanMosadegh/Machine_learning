@@ -37,30 +37,33 @@ def entropy( input_dataset , class_labels_list ) : # , class_labels ) :
 	p_log2p_list = []
 
 	for class_label in class_labels_list : # use class label to count the no of rows for each class label (binary=2)
-		print('#########')
+		print('######### H ######')
+		print('-> input dataset in H=')
+		print(input_dataset)
+
 		classes_list = input_dataset[:,-1].tolist()
 		print(f'-> class label= {class_label}')
-		print(f'-> classes list= {classes_list}')
+		print(f'-> column of class labels= {classes_list}')
 
 		no_of_class_labels = classes_list.count( class_label ) # get the last col==labels - how to count a param in a np.array column??? - should get the last column based on index
-		#print( f'-> no. of Ci= {no_of_class_labels}')
-		#print(f'-> rows= {no_of_class_labels}')
-		#print(f'-> total rows= {total_rows_of_feature_dataset}')
+		print( f'-> no. of Ci= {no_of_class_labels}')
+		print(f'-> rows= {no_of_class_labels}')
+		print(f'-> total rows= {total_rows_of_feature_dataset}')
 
-		prob_of_class = no_of_class_labels/total_rows_of_feature_dataset
-		#print(f'-> prob= {prob_of_class}')
-
-		if (prob_of_class == 0 ) :
+		if (no_of_class_labels == 0 or total_rows_of_feature_dataset == 0) :
 			p_log2p = 0
-			#print(f'-> prob is= 0, we get the p_log2p= 0')
+			print(f'-> we have an empty list... p_log2p=0')
+			continue
 
 		else:
+			prob_of_class = no_of_class_labels/total_rows_of_feature_dataset
+			print(f'-> prob= {prob_of_class}')
 			p_log2p = prob_of_class * np.log2(prob_of_class)
 			#print(f'-> plog2p= {p_log2p}')
 
-		p_log2p_list.append( p_log2p )
+			p_log2p_list.append( p_log2p )
 
-		entropy_of_feature_dataset = -sum( p_log2p_list )
+	entropy_of_feature_dataset = -sum( p_log2p_list )
 		#print('#########')
 
 	return entropy_of_feature_dataset , total_rows_of_feature_dataset
@@ -97,17 +100,20 @@ def get_split( input_dataset ) :
 	# input_dataset = np.concatenate( (feature_dataset , label_dataset.T ) , axis=1 ) # join 2 lists vertically
 
 	# get the class_labels
-	class_labels_list = list( set(input_dataset[-1].flatten() ) )
+	class_labels_list = list( set(input_dataset[:,-1].flatten()) ) 
 	print(f'-> class_labels_list is= {class_labels_list}')
 
-	n_rows_parent = len( feature_dataset[ :,0 ] ) # get the col based on col index
+	n_rows_parent = len( input_dataset[ :,0 ] ) # get the col based on col index
+
+	print(f'-> no of feature columns = { (len( input_dataset[0,:]) -1) }')
 
 	col_index_list = []
 	IG_feature_list = []
 
 	# loop over columns
-	for col_index in range(len(feature_dataset[0,:]) ) :
-		print(f'-> for col {col_index}')
+	for col_index in range( (len( input_dataset[0,:]) -1) ) :
+		print( " ")
+		print(f'-> SPLIT for col {col_index}')
 		#print( range(len(feature_dataset[0,:]) ) )
 		#print( f'-> shape is = {feature_dataset.shape}' )
 		#print(f'-> for col= {col_index}')
@@ -117,14 +123,22 @@ def get_split( input_dataset ) :
 		print(f'-> H-parent= {entropy_parent}')
 		entropy_parent = entropy_parent[0]
 
+		print('-> input dataset before splitting=')
+		print(input_dataset)
 
 		groups = split_dataset( input_dataset , col_index )
+		print(';-> now groups that go into entropy are=')
+		print(groups)
+		print('-> left group=')
+		print(groups[0])
 
 		entropy_left = entropy( groups[0] , class_labels_list )
 		entropy_left = entropy_left[0]
 		#print(type(entropy_left))
 		print( f'-> H left= {entropy_left}' )
 
+		print('-> right group=')
+		print(groups[1])
 		entropy_right = entropy( groups[1] , class_labels_list )
 		entropy_right = entropy_right[0]
 		print(f'-> H right= {entropy_right}')
@@ -156,7 +170,7 @@ def get_split( input_dataset ) :
 	best_feature_index = IG_feature_list.index(max_IG)  #index(max( IG_feature_list ))
 	print(best_feature_index )
 
-	groups_left_right = split_dataset( feature_dataset , best_feature_index )
+	groups_left_right = split_dataset( input_dataset , best_feature_index )
 	#print(f'-> groups= {groups_left_right}')
 	print('1st group=')
 	print(groups_left_right[0])
@@ -192,7 +206,12 @@ def split(node, max_depth, min_size, depth) :
 	del(node['groups'])
 
 	# check if left or right is empty - for a no split
-	if not left or not right:
+	print('-> type of left=')
+	print(type(left))
+
+	#if not left or not right:
+	if ( left.size == 0 or right.size == 0 ) :
+		print('-> we have an empty left-right array')
 		node['left'] = node['right'] = to_terminal(left + right)  # ??? how add 2 arrays?
 		return
 
@@ -223,16 +242,19 @@ def split(node, max_depth, min_size, depth) :
 ####################################################################################################
 
 # build a decision tree
-def DT_train_binary(feature_dataset, label_dataset, max_depth, min_size) :
+def DT_train_binary(feature_dataset, label_dataset, max_depth ) :
 
 	#label_dataset_trans = label_dataset[np.newaxis]
 	input_dataset = np.concatenate( (feature_dataset , label_dataset.T ) , axis=1 ) # join 2 lists vertically
+	min_size = 1 # the min number of samples in a node
+	print('-> input dataset=')
+	print(input_dataset)
 
 	root_dict = get_split( input_dataset )
 
 	split(root_dict , max_depth, min_size, 1)
 
-	return root
+	return root_dict
 
 
 
@@ -256,8 +278,11 @@ if __name__ == '__main__' :
 
 	feature_dataset_arr = np.array( feature_dataset_list )
 	label_dataset_arr = np.array( [label_dataset_list] ) # use [list] if we you want to transpose a list to column later
-	
-	DT_train_binary( feature_dataset_arr , label_dataset_arr , max_depth )
+	max_depth = 1
+
+	tree = DT_train_binary( feature_dataset_arr , label_dataset_arr , max_depth )
+	print('-> final dictionary/tree is=')
+	print(tree)
 
 
 # ############################################################################################################
