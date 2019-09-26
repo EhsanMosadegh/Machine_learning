@@ -2,6 +2,8 @@
 
 import numpy as np
 
+####################################################################################################
+
 # Gini score function
 # def Gini_score( feature_dataset , class_labels ) :
 # 	# calculates Gini score for each split == input data set that includes class labels in it as the last column
@@ -25,7 +27,7 @@ import numpy as np
 
 # 	return Gini_for_feature_dataset , total_rows_of_feature_dataset
 
-
+####################################################################################################
 
 def entropy( input_dataset , class_labels_list ) : # , class_labels ) :
 	# calculates entropy based on each input dataset = Y = class labels in it as the last column
@@ -63,7 +65,7 @@ def entropy( input_dataset , class_labels_list ) : # , class_labels ) :
 
 	return entropy_of_feature_dataset , total_rows_of_feature_dataset
 
-
+####################################################################################################
 
 # print(feature_dataset)
 # print(" ")
@@ -84,16 +86,19 @@ def split_dataset( input_dataset , col_index ) :
 
 	return left , right , n_row_left , n_row_right
 
-
+####################################################################################################
 
 # Select the best split point for a dataset
-def get_split( feature_dataset , label_dataset ) :
+#def get_split( feature_dataset , label_dataset ) :
+def get_split( input_dataset ) :
 
-	#label_dataset_trans = label_dataset[np.newaxis]
-	input_dataset = np.concatenate( (feature_dataset , label_dataset.T ) , axis=1 ) # join 2 lists vertically
+
+	# #label_dataset_trans = label_dataset[np.newaxis]
+	# input_dataset = np.concatenate( (feature_dataset , label_dataset.T ) , axis=1 ) # join 2 lists vertically
 
 	# get the class_labels
-	class_labels_list = list( set(label_dataset.flatten() ) )
+	class_labels_list = list( set(input_dataset[-1].flatten() ) )
+	print(f'-> class_labels_list is= {class_labels_list}')
 
 	n_rows_parent = len( feature_dataset[ :,0 ] ) # get the col based on col index
 
@@ -158,46 +163,74 @@ def get_split( feature_dataset , label_dataset ) :
 	print('2nd group=')
 	print(groups_left_right[1])
 
-	best_feature_dict = {'index': best_feature_index , 'groups': groups_left_right }
+	root_dict = {'index': best_feature_index , 'groups': groups_left_right }
 
-	return best_feature_dict
+	return root_dict
 
+####################################################################################################
 
+# Create a terminal node value
+def to_terminal(group) :  # ????
+
+	### array to list
+	group = group.tolist()
+
+	outcomes = [row[-1] for row in group]
+
+	return max(set(outcomes), key=outcomes.count)
+
+####################################################################################################
 
 # Create child splits for a node or make terminal
 def split(node, max_depth, min_size, depth) :
-	
-	left, right = node['groups']
+
+	left, right = node['groups'][0:2]
+	print('-> left, right lists=')
+	print(left)
+	print(right)
+
 	del(node['groups'])
-	# check for a no split
+
+	# check if left or right is empty - for a no split
 	if not left or not right:
-		node['left'] = node['right'] = to_terminal(left + right)
+		node['left'] = node['right'] = to_terminal(left + right)  # ??? how add 2 arrays?
 		return
+
 	# check for max depth
 	if depth >= max_depth:
+
 		node['left'], node['right'] = to_terminal(left), to_terminal(right)
 		return
+
 	# process left child
-	if len(left) <= min_size:
+	if len(left) <= min_size :
 		node['left'] = to_terminal(left)
+
 	else:
+
 		node['left'] = get_split(left)
 		split(node['left'], max_depth, min_size, depth+1)
+
 	# process right child
 	if len(right) <= min_size:
 		node['right'] = to_terminal(right)
+
 	else:
+
 		node['right'] = get_split(right)
 		split(node['right'], max_depth, min_size, depth+1)
 
+####################################################################################################
 
-#def DT_train_binary(feature_dataset,label_dataset) :
+# build a decision tree
+def DT_train_binary(feature_dataset, label_dataset, max_depth, min_size) :
 
-def build_tree(feature_dataset, label_dataset, max_depth, min_size) :
+	#label_dataset_trans = label_dataset[np.newaxis]
+	input_dataset = np.concatenate( (feature_dataset , label_dataset.T ) , axis=1 ) # join 2 lists vertically
 
-	root = get_split(feature_dataset , label_dataset)
+	root_dict = get_split( input_dataset )
 
-	split(root, max_depth, min_size, 1)
+	split(root_dict , max_depth, min_size, 1)
 
 	return root
 
@@ -207,6 +240,8 @@ def build_tree(feature_dataset, label_dataset, max_depth, min_size) :
 	# print(" ")
 	# print( f'the best feature= {best_feature}')
 
+
+####################################################################################################
 
 ####################################################################################################
 
@@ -222,14 +257,7 @@ if __name__ == '__main__' :
 	feature_dataset_arr = np.array( feature_dataset_list )
 	label_dataset_arr = np.array( [label_dataset_list] ) # use [list] if we you want to transpose a list to column later
 	
-	DT_train_binary( feature_dataset_arr , label_dataset_arr )
-
-
-
-
-
-
-
+	DT_train_binary( feature_dataset_arr , label_dataset_arr , max_depth )
 
 
 # ############################################################################################################
