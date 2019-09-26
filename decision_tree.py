@@ -87,7 +87,7 @@ def split_dataset( input_dataset , col_index ) :
 
 
 # Select the best split point for a dataset
-def get_best_split( feature_dataset , label_dataset ) :
+def get_split( feature_dataset , label_dataset ) :
 
 	#label_dataset_trans = label_dataset[np.newaxis]
 	input_dataset = np.concatenate( (feature_dataset , label_dataset.T ) , axis=1 ) # join 2 lists vertically
@@ -163,11 +163,49 @@ def get_best_split( feature_dataset , label_dataset ) :
 	return best_feature_dict
 
 
-def DT_train_binary(feature_dataset,label_dataset) :
 
-	best_feature = get_best_split( feature_dataset , label_dataset )
-	print(" ")
-	print( f'the best feature= {best_feature}')
+# Create child splits for a node or make terminal
+def split(node, max_depth, min_size, depth) :
+	
+	left, right = node['groups']
+	del(node['groups'])
+	# check for a no split
+	if not left or not right:
+		node['left'] = node['right'] = to_terminal(left + right)
+		return
+	# check for max depth
+	if depth >= max_depth:
+		node['left'], node['right'] = to_terminal(left), to_terminal(right)
+		return
+	# process left child
+	if len(left) <= min_size:
+		node['left'] = to_terminal(left)
+	else:
+		node['left'] = get_split(left)
+		split(node['left'], max_depth, min_size, depth+1)
+	# process right child
+	if len(right) <= min_size:
+		node['right'] = to_terminal(right)
+	else:
+		node['right'] = get_split(right)
+		split(node['right'], max_depth, min_size, depth+1)
+
+
+#def DT_train_binary(feature_dataset,label_dataset) :
+
+def build_tree(feature_dataset, label_dataset, max_depth, min_size) :
+
+	root = get_split(feature_dataset , label_dataset)
+
+	split(root, max_depth, min_size, 1)
+
+	return root
+
+
+
+	# best_feature = get_best_split( feature_dataset , label_dataset )
+	# print(" ")
+	# print( f'the best feature= {best_feature}')
 
 
 ####################################################################################################
