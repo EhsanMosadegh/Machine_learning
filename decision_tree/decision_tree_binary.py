@@ -41,14 +41,11 @@ def entropy( input_dataset , class_labels_list ) : # , class_labels ) :
 		print('-> input dataset in H=')
 		print(input_dataset)
 
-		classes_list = input_dataset[:,-1] #.tolist()
+		classes_list = input_dataset[:,-1].tolist()
 		print(f'-> class label= {class_label}')
 		print(f'-> column of class labels= {classes_list}')
-		#print(type( classes_list))
 
-		classes_list = classes_list.tolist()
-		no_of_class_labels = classes_list.count( class_label ) # get the last col==labels - how to count a param in a np.array 
-		#del classes_list
+		no_of_class_labels = classes_list.count( class_label ) # get the last col==labels - how to count a param in a np.array column??? - should get the last column based on index
 		print( f'-> no. of Ci= {no_of_class_labels}')
 		print(f'-> rows= {no_of_class_labels}')
 		print(f'-> total rows= {total_rows_of_feature_dataset}')
@@ -78,37 +75,17 @@ def entropy( input_dataset , class_labels_list ) : # , class_labels ) :
 
 #col_index = 2
 
-def test_split_dataset( input_dataset , col_index , feature_value) :
-
-	left = []
-	right = []
+def split_dataset( input_dataset , col_index ) :
 
 	# define a filter here - for real values change the filter here
-	# filter_left = ( input_dataset[ : , col_index ] == 0 )
-	# filter_right = ( input_dataset[ : , col_index ] == 1 )
-	for each_row in range(len( input_dataset[:,col_index] )) :
+	filter_left = ( input_dataset[ : , col_index ] == 0 )
+	filter_right = ( input_dataset[ : , col_index ] == 1 )
 
-		row_value = input_dataset[ each_row , col_index ]
-		print(f'-> row value is= {row_value}')
-		print(f'-> featureValue is= {feature_value}')
-		if row_value < feature_value :
-			
-			left.append( row_value )
+	left = input_dataset[ filter_left ]
+	right = input_dataset[ filter_right ]
 
-		else:
-
-			right.append( row_value )
-
-
-	# left = input_dataset[ filter_left ]
-	# right = input_dataset[ filter_right ]
-
-	n_row_left = len( left )
-	print( f'-> left is= {left}'  )
-
-	n_row_right = len(right)
-	print( f'-> right is= {right}'  )
-
+	n_row_left = len(left[:,0])
+	n_row_right = len(right[:,0])
 
 	return left , right , n_row_left , n_row_right
 
@@ -131,83 +108,76 @@ def get_split( input_dataset ) :
 	print(f'-> no of feature columns = { (len( input_dataset[0,:]) -1) }')
 
 	col_index_list = []
-	featureValue_IG_list = []
+	IG_feature_list = []
 
 	# loop over columns
 	for col_index in range( (len( input_dataset[0,:]) -1) ) :
-		for each_row in range(len(input_dataset[:,0])) :
-			print( f'-> no of rows in column feature= {range(len(input_dataset[:,0]))} ')
-			feature_value = input_dataset[ each_row , col_index ]
-			print( f'-> Fvalue is= {feature_value}')
+		print( " ")
+		print(f'-> SPLIT for col {col_index}')
+		#print( range(len(feature_dataset[0,:]) ) )
+		#print( f'-> shape is = {feature_dataset.shape}' )
+		#print(f'-> for col= {col_index}')
+		#print(feature_dataset)
 
-			# print( " ")
-			# print(f'-> SPLIT for col {col_index}')
-			#print( range(len(feature_dataset[0,:]) ) )
-			#print( f'-> shape is = {feature_dataset.shape}' )
-			#print(f'-> for col= {col_index}')
-			#print(feature_dataset)
+		entropy_parent = entropy( input_dataset , class_labels_list )
+		print(f'-> H-parent= {entropy_parent}')
+		entropy_parent = entropy_parent[0]
 
-			entropy_parent = entropy( input_dataset , class_labels_list )
-			# print(f'-> H-parent= {entropy_parent}')
-			entropy_parent = entropy_parent[0]
+		print('-> input dataset before splitting=')
+		print(input_dataset)
 
-			# print('-> input dataset before splitting=')
-			# print(input_dataset)
+		groups = split_dataset( input_dataset , col_index )
+		print(';-> now groups that go into entropy are=')
+		print(groups)
+		print('-> left group=')
+		print(groups[0])
 
-			groups = test_split_dataset( input_dataset , col_index , feature_value ) #----> ????
-			# print(';-> now groups that go into entropy are=')
-			# print(groups)
-			# print('-> left group=')
-			# print(groups[0])
+		entropy_left = entropy( groups[0] , class_labels_list )
+		entropy_left = entropy_left[0]
+		#print(type(entropy_left))
+		print( f'-> H left= {entropy_left}' )
 
-			entropy_left = entropy( groups[0] , class_labels_list )
-			entropy_left = entropy_left[0]
-			#print(type(entropy_left))
-			# print( f'-> H left= {entropy_left}' )
+		print('-> right group=')
+		print(groups[1])
+		entropy_right = entropy( groups[1] , class_labels_list )
+		entropy_right = entropy_right[0]
+		print(f'-> H right= {entropy_right}')
 
-		# print('-> right group=')
-		# print(groups[1])
-			entropy_right = entropy( groups[1] , class_labels_list )
-			entropy_right = entropy_right[0]
-			# print(f'-> H right= {entropy_right}')
-
-			n_row_left = groups[2]
-			n_row_right = groups[3]
+		n_row_left = groups[2]
+		n_row_right = groups[3]
 
 
-			weight_left = n_row_left/n_rows_parent
-			#print(type(weight_left))
-			weight_right = n_row_right/n_rows_parent
-			#print(type(weight_right))
 
-			# get IG for each feature value
-			left_contrib = (weight_left*entropy_left)
-			print(f'-> left contrib= {left_contrib}')
-			right_contrib = (weight_right*entropy_right)
-			print(f'-> right contrib= {right_contrib}')
+		weight_left = n_row_left/n_rows_parent
+		#print(type(weight_left))
+		weight_right = n_row_right/n_rows_parent
+		#print(type(weight_right))
 
-			# IG for each featureValue
-			info_gain_featureValue = entropy_parent - ( left_contrib + right_contrib )
-			print(f'-> for col={col_index}, IG is ={info_gain_featureValue} ')
-			col_index_list.append( col_index )
-			featureValue_IG_list.append( info_gain_featureValue )
+		# get IG for each feature
+		left_contrib = (weight_left*entropy_left)
+		print(f'-> left contrib= {left_contrib}')
+		right_contrib = (weight_right*entropy_right)
+		print(f'-> right contrib= {right_contrib}')
 
-	print( featureValue_IG_list)
-	max_IG = max( featureValue_IG_list )
+		info_gain_feature = entropy_parent - ( left_contrib + right_contrib )
+		print(f'-> for col={col_index}, IG is ={info_gain_feature} ')
+		col_index_list.append( col_index )
+		IG_feature_list.append( info_gain_feature )
+
+	print( IG_feature_list)
+	max_IG = max( IG_feature_list )
 	print( f'-> max = {max_IG}')
+	best_feature_index = IG_feature_list.index(max_IG)  #index(max( IG_feature_list ))
+	print(best_feature_index )
 
-	best_featureValue_index = featureValue_IG_list.index(max_IG)  #index(max( featureValue_IG_list ))
-	print(best_featureValue_index )
-
-
-	groups_left_right = test_split_dataset( input_dataset , col_index , max_IG )
+	groups_left_right = split_dataset( input_dataset , best_feature_index )
 	#print(f'-> groups= {groups_left_right}')
 	print('1st group=')
 	print(groups_left_right[0])
 	print('2nd group=')
 	print(groups_left_right[1])
 
-	root_dict = {'index': best_featureValue_index , 'groups': groups_left_right }
+	root_dict = {'index': best_feature_index , 'groups': groups_left_right }
 
 	return root_dict
 
@@ -301,22 +271,9 @@ if __name__ == '__main__' :
 
 	#feature_dataset_list = [ ['n','y','n'] , ['y','n','n'] , ['y','n','n'] , ['n','y','y'] , ['y','y','n'] , ['y','y','n'] ]
 	#label_dataset_list = [ 'n' , 'n' , 'y' , 'y' , 'n' , 'y' ]
-	# feature_dataset_list = [ [0,1] , [0,0] , [1,0] , [0,0] , [1,1] ]
-	# #label_dataset_list = [ [1] , [0] , [0] , [0] , [1]]
-	# label_dataset_list = [ 1,0,0,0,1]
-
-	feature_dataset_list = [[2.771244718,1.784783929],
-	[1.728571309,1.169761413],
-	[3.678319846,2.81281357],
-	[3.961043357,2.61995032],
-	[2.999208922,2.209014212],
-	[7.497545867,3.162953546],
-	[9.00220326,3.339047188],
-	[7.444542326,0.476683375],
-	[10.12493903,3.234550982],
-	[6.642287351,3.319983761]]
-
-	label_dataset_list = [0,0,0,0,0,1,1,1,1,1]
+	feature_dataset_list = [ [0,1] , [0,0] , [1,0] , [0,0] , [1,1] ]
+	#label_dataset_list = [ [1] , [0] , [0] , [0] , [1]]
+	label_dataset_list = [ 1,0,0,0,1]
 
 
 	feature_dataset_arr = np.array( feature_dataset_list )
@@ -329,3 +286,10 @@ if __name__ == '__main__' :
 
 
 # ############################################################################################################
+
+
+
+
+
+
+
